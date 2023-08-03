@@ -103,4 +103,4 @@ const printNumD = () => {
 
 ## Sources
 - [:package: this package on npm](https://www.npmjs.com/package/base-ts-result)
-- [:octocat: this package on github](https://github.com/Kostayne/ts-result)
+- [:octocat: this package on github](https://github.com/Kostayne/base-ts-result)
