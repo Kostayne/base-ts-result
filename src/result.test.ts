@@ -1,5 +1,5 @@
 import { describe, expect, it } from '@jest/globals';
-import { Err, Ok } from './result';
+import { Err, Ok, Result } from './result';
 
 describe('Constructors', () => {
     it('Err fn produces correct Result', () => {
@@ -36,10 +36,20 @@ describe('Result methods', () => {
     });
 
     it('UnwrapOr returns alt argument if result is error', () => {
-        expect(Err<number, string>('err').unwrapOr(4)).toBe(4);
+        expect(Err('err').unwrapOr(4)).toBe(4);
     });
 
     it('UnwrapOr returns alt argument if result is not error', () => {
-        expect(Ok<number, string>(5).unwrapOr(0)).toBe(5);
+        expect(Ok(5).unwrapOr(0)).toBe(5);
+    });
+
+    it('UnwrapErr returns value from ERR instance', () => {
+        const t: Result<number, string> = Err('err string');
+        expect(t.unwrapErr()).toBe('err string');
+    });
+
+    it('UnwrapErr throws exception if called in OK instance', () => {
+        const t: Result<number, string> = Ok(6);
+        expect(() => t.unwrapErr()).toThrow();
     });
 });

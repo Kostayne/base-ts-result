@@ -1,49 +1,56 @@
-export abstract class Result<Val, Err> {
-    abstract isError: boolean;
+export interface Result<Val, Err> {
+    readonly isError: boolean;
+    readonly value: Val | Err;
 
-    abstract unwrap(): Val;
-    abstract unwrapOr(altRes: Val): Val;
-    abstract expect(msg: string): Val;
+    unwrap(): Val;
+    unwrapErr(): Err;
+    unwrapOr(altRes: Val): Val;
 
+    expect(msg: string): Val;
 }
 
-class ERR<Val, Err> extends Result<Val, Err> {
+class ERR<Err> implements Result<never, Err> {
     isError = true;
-    readonly value!: Err;
+    public readonly value!: Err;
 
     constructor(value: Err) {
-        super();
         this.value = value;
     }
 
     /**
      * @description if result is error, throws exception with panic message
      */
-    unwrap(): Val {
+    unwrap<Res>(): Res {
         throw new Error('Unwrap error Result');
     }
 
     /**
      * @description if result is error, returns alt
      */
-    unwrapOr(alt: Val): Val {
+    unwrapOr<Res>(alt: Res): Res {
         return alt;
     }
 
     /**
      * @description if result is error, throws exception with provided message
      */
-    expect(msg: string): Val {
+    expect<Res>(msg: string): Res {
         throw new Error(msg);
+    }
+
+    /**
+     * @description returns error or throws exception
+     */
+    unwrapErr(): Err {
+        return this.value;
     }
 }
 
-class OK<Val, Err> extends Result<Val, Err> {
+class OK<Val> implements Result<Val, never> {
     isError = false;
     readonly value!: Val;
 
     constructor(value: Val) {
-        super();
         this.value = value;
     }
 
@@ -51,25 +58,29 @@ class OK<Val, Err> extends Result<Val, Err> {
         return this.value;
     }
 
-    unwrapOr(): Val {
+    unwrapOr(val: Val): Val {
         return this.value;
     }
 
     expect(msg: string): Val {
         return this.value;
     }
+
+    unwrapErr(): never {
+        throw new Error('tried to get value as error from Ok result');
+    }
 }
 
 /**
  * @description Create success option
  */
-export function Ok<Val, Err>(res: Val): Result<Val, Err> {
+export function Ok<T>(res: T): OK<T> {
     return new OK(res);
 }
 
 /**
  * @description Create error option
  */
-export function Err<Val, Err>(err: Err): Result<Val, Err> {
+export function Err<T>(err: T): ERR<T> {
     return new ERR(err);
 }

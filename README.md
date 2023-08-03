@@ -23,20 +23,22 @@ pnpm add base-ts-result
 ## Overview
 
 ### Result
-Abstract class that contains operation result and interaction methods
+Interface that contains operation result and interaction methods
 ``` ts
-abstract class Result<Val, Err> {
+interface Result<Val, Err> {
     value: Val | Err;
     isError: boolean;
 
     unwrap(): Val;
     unwrapOr(altRes: Val): Val;
+    unwrapErr(): Err;
+
     expect(msg: string): Val;
 }
 
 // Result implementations
-class OK extends Result;
-class ERR extends Result;
+class OK implements Result;
+class ERR implements Result;
 ```
 
 ### Constructors
@@ -44,10 +46,10 @@ Handy functions to create Result objects
 
 ```ts
 // create success Result
-function Ok<Val, Err>(res: Val): Result<Val, Err>;
+function Ok<Val>(res: Val): OK<Val>;
 
 // create error Result
-function Err<Val, Err>(err: Err): Result<Val, Err>;
+function Err<Err>(err: Err): ERR<Err>;
 ```
 
 ## Example
