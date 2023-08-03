@@ -4,9 +4,9 @@ Better error handling stolen from rust
 
 <!-- shields -->
 
-![npm](https://img.shields.io/npm/v/ts-result)
-![npm](https://img.shields.io/npm/dm/ts-result)
-![NPM](https://img.shields.io/npm/l/ts-result)
+![npm](https://img.shields.io/npm/v/base-ts-result)
+![npm](https://img.shields.io/npm/dm/base-ts-result)
+![NPM](https://img.shields.io/npm/l/base-ts-result)
 
 * [Install](#Install)
 * [Overview](#Overview)

@@ -1,6 +1,6 @@
 {
   "name": "base-ts-result",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Better error handling stolen from rust",
   "main": "dist/index.js",
   "scripts": {
