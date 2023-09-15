@@ -79,29 +79,28 @@ const generateNumber = (): Result<number, string> => {
 
 const handleResult = (res: Result<number, string>) => {
     // Result is OK
+    // ===============
     res.unwrap(); // 15
     res.unwrapOr(); // 15
     res.expect('Custom exception msg'); // 15
     res.unwrapErr(); // Exception: tried to get value as error from Ok result
 
     // Result is ERR
+    // ===============
     res.unwrap(); // Exception: Unwrap error Result
     res.unwrapOr(-1); // -1
     res.expect('Custom exception msg'); // Exception: Custom exception msg
     res.unwrapErr(); // Error object
 
-    // If you wanna handle error in higher function, just check result.isError
+    // If you wanna handle error in higher function, just check 
+    // =========================================================
     if (res.isError) {
         return res;
     }
 
-    // some logic..
+    // some regular logic..
     return Ok('success handle result');
 }
-
-const fnThatThrows = () => {
-};
-
 
 const getResult = () => {
     // res.isError = true;
