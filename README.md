@@ -1,4 +1,4 @@
-BASE TS Result
+Base Ts Result
 ===========
 Better error handling stolen from rust
 
@@ -52,11 +52,20 @@ function Ok<Val>(res: Val): OK<Val>;
 function Err<Err>(err: Err): ERR<Err>;
 ```
 
+### Helpers
+```ts
+// Convert exceptions into errors & function result into Ok
+function toResult<Val, ERR>(fn: () => Val): Result<Val, ERR>;
+
+// Convert promise reject into errors & promise resolve into Ok
+async function toResultAsync<Val, ERR>(fn: () => Promise<Val>): Promise<Result<Val, ERR>>;
+```
+
 ## Example
 ```ts
-import { Ok, Err, Result } from 'base-ts-result';
+import { Ok, Err, Result, toResult, toResultAsync } from 'base-ts-result';
 
-const generateRandomNum = (): Result<number, string> => {
+const generateNumber = (): Result<number, string> => {
     const num = Math.round(Math.random() * 100);
 
     if (num > 50) {
@@ -65,42 +74,77 @@ const generateRandomNum = (): Result<number, string> => {
     }
 
     // return error result
-    return Err('Num below 50');
+    return Err('Number below 50');
 };
 
-const printNumA = () => {
-    const res = generateRandomNum();
-    
+const handleResult = (res: Result<number, string>) => {
+    // Result is OK
+    res.unwrap(); // 15
+    res.unwrapOr(); // 15
+    res.expect('Custom exception msg'); // 15
+    res.unwrapErr(); // Exception: tried to get value as error from Ok result
+
+    // Result is ERR
+    res.unwrap(); // Exception: Unwrap error Result
+    res.unwrapOr(-1); // -1
+    res.expect('Custom exception msg'); // Exception: Custom exception msg
+    res.unwrapErr(); // Error object
+
+    // If you wanna handle error in higher function, just check result.isError
     if (res.isError) {
-        // return error result to higher function,
-        // where error will be resolved
-        // or handle it right here, why not?
         return res;
     }
 
-    console.log(res.unwrap());
+    // some logic..
+    return Ok('success handle result');
 }
 
-const printNumB = () => {
-    // panic if generateRandomNum returns error result
-    // (throws exception)
-    const num = generateRandomNum().unwrap();
-    console.log(num);
+const fnThatThrows = () => {
 };
 
-const printNumC = () => {
-    // panic if generateRandomNum returns error result
-    // (throws exception with message "Error while generating number")
-    const num = generateRandomNum().expect('Error while generating number');
-    console.log(num);
+
+const getResult = () => {
+    // res.isError = true;
+    let res = toResult(() => {
+        throw new Error('like to throw exceptions');
+    });
+
+    // res.isError = false;
+    res = toResult(() => {
+        return 7;
+    });
+};
+
+const getResultAsync = async() => {
+    // imitating promise with success result
+    function timer<T>(val: T): Promise<T> {
+        return new Promise(res => {
+            setTimeout(() => {
+                res(val);
+            }, 100);
+        });
+    }
+
+    // imitating promise with error result 
+    function errTimer(): Promise<never> {
+        return new Promise((_, rej) => {
+            setTimeout(() => {
+                rej();
+            }, 100);
+        });
+    }
+
+    // res.isError = false; res.unwrap() = 1;
+    let res = await toResultAsync(() => {
+        return timer(1);
+    });
+
+    // res.isError = true;
+    res = await toResultAsync(() => {
+        return errTimer();
+    });
 }
 
-const printNumD = () => {
-    // replace error result value with 15
-    // does'nt throw exception
-    const num = generateRandomNum().unwrapOr(15);
-    console.log(num);
-}
 ```
 
 ## Sources

@@ -1,5 +1,21 @@
 import { describe, expect, it } from '@jest/globals';
-import { Err, Ok, Result } from './result';
+import { Err, Ok, Result, toResult, toResultAsync } from './result';
+
+function timer<T>(val: T): Promise<T> {
+    return new Promise(res => {
+        setTimeout(() => {
+            res(val);
+        }, 100);
+    });
+}
+
+function errTimer(): Promise<never> {
+    return new Promise((_, rej) => {
+        setTimeout(() => {
+            rej();
+        }, 100);
+    });
+}
 
 describe('Constructors', () => {
     it('Err fn produces correct Result', () => {
@@ -51,5 +67,31 @@ describe('Result methods', () => {
     it('UnwrapErr throws exception if called in OK instance', () => {
         const t: Result<number, string> = Ok(6);
         expect(() => t.unwrapErr()).toThrow();
+    });
+
+    it('ToResult returns OK if exception was not thrown', () => {
+        const res = toResult(() => 7);
+        expect(res.unwrap()).toBe(7);
+    });
+
+    it('ToResult returns ERR if exception was thrown', () => {
+        const res = toResult<string, string>(() => { throw new Error('as') });
+        expect(res.unwrapOr('err')).toBe('err');
+    });
+
+    it('ToResultAsync works with resolved promises', async () => {
+        const res = await toResultAsync(() => {
+            return timer(8);
+        });
+
+        expect(res.unwrap()).toBe(8);
+    });
+
+    it('ToResultAsync works with rejected promises', async () => {
+        const res = await toResultAsync(() => {
+            return errTimer();
+        });
+
+        expect(res.isError).toBe(true);
     });
 });

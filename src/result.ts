@@ -84,3 +84,25 @@ export function Ok<T>(res: T): OK<T> {
 export function Err<T>(err: T): ERR<T> {
     return new ERR(err);
 }
+
+/**
+ * @description Catches exceptions and converts them into Result
+*/
+export function toResult<T, E>(fn: () => T): Result<T, E> {
+    try {
+        const val = fn();
+        return Ok(val);
+    } catch(e) {
+        return Err(e as E);
+    }
+}
+
+export async function toResultAsync<T, E>(fn: () => Promise<T>): Promise<Result<T, E>> {
+    try {
+        const val = await fn();
+        
+        return Ok(val);
+    } catch(e) {
+        return Err(e as E);
+    }
+}
