@@ -142,6 +142,16 @@ const getResultAsync = async() => {
     res = await toResultAsync(() => {
         return errTimer();
     });
+
+    // Or you can pass a promise
+    const timerPromise = timer(2);
+    const errTimerPromise = errTimer();
+
+    // res.isError = false; res.unwrap = 2;
+    res = await toResultAsync(timerPromise);
+
+    // res.isError = true;
+    res = await toResultAsync(errTimerPromise);
 }
 
 ```

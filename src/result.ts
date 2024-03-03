@@ -2,9 +2,39 @@ export interface Result<Val, Err> {
     readonly isError: boolean;
     readonly value: Val | Err;
 
+    /**
+     * @description returns result value if it's not an error, otherwise throws an exception
+     * @example
+     * let res = Ok(5);
+     * console.log(res.unwrap()); // 5
+     * 
+     * res = Err('err');
+     * console.log(res.unwrap()); // Exception: Tried to unwrap an Error result
+     */
     unwrap(): Val;
+
+    /**
+     * @description returns error value if it exists, otherwise throws an exception
+     * @example
+     * let res = Ok(5);
+     * console.log(res.unwrapErr()); // Exception: Tried to unwrap an Ok result error
+     * 
+     * res = Err('error msg');
+     * console.log(res.unwrapErr()); // 'error msg'
+     */
     unwrapErr(): Err;
-    unwrapOr(altRes: Val): Val;
+
+    /**
+     * @param altVal
+     * @description result.unwrap() will return altVal in case of error
+     * @example
+     * let res = Ok(5);
+     * console.log(res.unwrapOr(0)); // 5
+     * 
+     * res = Err('error msg');
+     * console.log(res.unwrapOr(0)); // 0
+     */
+    unwrapOr(altVal: Val): Val;
 
     expect(msg: string): Val;
 }
@@ -17,30 +47,18 @@ class ERR<Err> implements Result<never, Err> {
         this.value = value;
     }
 
-    /**
-     * @description if result is error, throws exception with panic message
-     */
     unwrap<Res>(): Res {
-        throw new Error('Unwrap error Result');
+        throw new Error('Tried to unwrap an Error result');
     }
 
-    /**
-     * @description if result is error, returns alt
-     */
     unwrapOr<Res>(alt: Res): Res {
         return alt;
     }
 
-    /**
-     * @description if result is error, throws exception with provided message
-     */
     expect<Res>(msg: string): Res {
         throw new Error(msg);
     }
 
-    /**
-     * @description returns error or throws exception
-     */
     unwrapErr(): Err {
         return this.value;
     }
@@ -58,16 +76,16 @@ class OK<Val> implements Result<Val, never> {
         return this.value;
     }
 
-    unwrapOr(val: Val): Val {
+    unwrapOr(_val: Val): Val {
         return this.value;
     }
 
-    expect(msg: string): Val {
+    expect(_msg: string): Val {
         return this.value;
     }
 
     unwrapErr(): never {
-        throw new Error('tried to get value as error from Ok result');
+        throw new Error('Tried to unwrap Ok result\'s error');
     }
 }
 
@@ -97,12 +115,17 @@ export function toResult<T, E>(fn: () => T): Result<T, E> {
     }
 }
 
-export async function toResultAsync<T, E>(fn: () => Promise<T>): Promise<Result<T, E>> {
-    try {
-        const val = await fn();
-        
-        return Ok(val);
-    } catch(e) {
-        return Err(e as E);
+export async function toResultAsync<T, E>(tg: Promise<T> | (() => Promise<T>)): Promise<Result<T, E>> {
+    if (typeof tg !== 'function' && typeof tg !== 'object') {
+        throw new Error('toResultAsync accepts only promises or functions that return a promise');
     }
+
+    const promise = typeof tg === 'object' ? tg : tg();
+
+    return promise.then((val) => {
+        return Ok(val);
+    })
+    .catch(err => {
+        return Err(err);
+    });
 }
