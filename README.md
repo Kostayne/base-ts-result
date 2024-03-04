@@ -59,6 +59,8 @@ function toResult<Val, ERR>(fn: () => Val): Result<Val, ERR>;
 
 // Convert promise reject into errors & promise resolve into Ok
 async function toResultAsync<Val, ERR>(fn: () => Promise<Val>): Promise<Result<Val, ERR>>;
+
+type AsyncResult<Val, ERR> = Promise<Result<Val, ERR>>;
 ```
 
 ## Example

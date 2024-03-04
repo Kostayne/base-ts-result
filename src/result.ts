@@ -129,3 +129,5 @@ export async function toResultAsync<T, E>(tg: Promise<T> | (() => Promise<T>)): 
         return Err(err);
     });
 }
+
+export type AsyncResult<Val, Err> = Promise<Result<Val, Err>>;
