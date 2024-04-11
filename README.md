@@ -26,19 +26,74 @@ pnpm add base-ts-result
 Interface that contains operation result and interaction methods
 ``` ts
 interface Result<Val, Err> {
+    // Contained Promise
     value: Val | Err;
-    isError: boolean;
 
+    // Queries
     unwrap(): Val;
-    unwrapOr(altRes: Val): Val;
     unwrapErr(): Err;
-
+    unwrapOr(altVal: Val): Val;
+    unwrapOrElse(altValFactory: (err: Err) => Val): Val;
     expect(msg: string): Val;
+    expectErr(msg: string): Err;
+    isOk(): this is OK<Val>;
+    isErr(): this is ERR<Err>;
+    ok(): Val|undefined,
+    err(): Err|undefined,
+
+    // Mappers
+    map<MappedVal>(mapper: (val: Val) => MappedVal): Result<MappedVal, Err>;
+    mapOrElse<MappedVal>(mapper: (val: Val) => MappedVal, fallback: (err: Err) => MappedVal): Result<MappedVal, Err>;
+    mapErr<MappedErr>(mapper: (err: Err) => MappedErr): Result<Val, MappedErr>;
+
+    // Utilities
+    inspect(inspector: (val: Val) => any): Result<Val, Err>;
+    inspectErr(inspector: (err: Err) => any): Result<Val, Err>;
+    toAsync(): AsyncResult<Val, Err>;
 }
 
 // Result implementations
 class OK implements Result;
 class ERR implements Result;
+```
+
+### AsyncResult
+Class that contains operation result and interaction methods for async code
+``` ts
+type AsyncMapped<T> = T|Promise<T>
+// Async result implementation for more ergonomic usage of Results with async code
+class AsyncResult<Val, Err> {
+    // Contained promise
+    promise: Promise<Result<Val, Err>>; 
+
+    // Creators
+    static fromPromise<Val>(promise: Promise<Val>): AsyncResult<Val, unknown>;
+    static fromResult<Val, Err>(result: Result<Val, Err>): AsyncResult<Val, Err>;
+
+    // Queries
+    async unwrap(): Promise<Val>;
+    async unwrapErr(): Promise<Err>;
+    async unwrapOr(altVal: Val): Promise<Val>;
+    async unwrapOrElse(altValFactory: (err: Err) => AsyncMapped<Val>): Promise<Val>;
+    async expect(msg: string): Promise<Val>;
+    async expectErr(msg: string): Promise<Err>;
+    async isOk(): Promise<boolean>;
+    async isErr(): Promise<boolean>;
+    async ok(): Promise<Val|undefined>;
+    async err(): Promise<Err|undefined>;
+
+    // Mappers
+    map<NewVal>(mapper: (val: Val) => AsyncMapped<NewVal>): AsyncResult<NewVal, Err>;
+    mapOrElse<NewVal>(
+        mapper: (val: Val) => AsyncMapped<NewVal>,
+        fallback: (err: Err) => AsyncMapped<NewVal>
+    ): AsyncResult<NewVal, Err>;
+    mapErr<NewErr>(mapper: (err: Err) => AsyncMapped<NewErr>): AsyncResult<Val, NewErr>;
+
+    // Utilities
+    inspect(inspector: (val: Val) => any): AsyncResult<Val, Err>;
+    inspectErr(inspector: (err: Err) => any): AsyncResult<Val, Err>;
+}
 ```
 
 ### Constructors
@@ -57,10 +112,11 @@ function Err<Err>(err: Err): ERR<Err>;
 // Convert exceptions into errors & function result into Ok
 function toResult<Val, ERR>(fn: () => Val): Result<Val, ERR>;
 
-// Convert promise reject into errors & promise resolve into Ok
-async function toResultAsync<Val, ERR>(fn: () => Promise<Val>): Promise<Result<Val, ERR>>;
+// Convert function returning T and error mapper returning E to new function returning Result<T, E>
+function resultify<T, E, F extends Fn<T>>(fn: F, mapErr: (err: unknown) => E): ResFn<T, E, F>;
 
-type AsyncResult<Val, ERR> = Promise<Result<Val, ERR>>;
+// Convert function returning Promise<T> and error mapper returning E to new function returning AsyncResult<T, E>
+function asyncResultify<T, E, F extends AsyncFn<T>>(fn: F, mapErr: (err: unknown) => E): AsyncResFn<T, E, F>;
 ```
 
 ## Example

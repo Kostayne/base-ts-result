@@ -15,7 +15,7 @@ const generateRandomNum = (): Result<number, string> => {
 const printNumA = () => {
     const res = generateRandomNum();
     
-    if (res.isError) {
+    if (res.isErr()) {
         // return error result to higher function,
         // where error will be resolved
         // or handle it right here, why not?
