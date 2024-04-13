@@ -104,7 +104,7 @@ export interface Result<Val, Err> {
      * res = Err('error msg');
      * console.log(res.ok()); // undefined
      */
-    ok(): Val|undefined,
+    ok(): Val | undefined,
 
     /**
      * @description result.err() returns undefined if Result is Ok, or contained error if Result is Err
@@ -115,7 +115,7 @@ export interface Result<Val, Err> {
      * res = Err('error msg');
      * console.log(res.err()); // 'error msg'
      */
-    err(): Err|undefined,
+    err(): Err | undefined,
 
     /**
      * @param inspector
@@ -190,17 +190,17 @@ class ERR<Err> implements Result<never, Err> {
 
     private getAdditionalErrorMessage() {
         if (this.value instanceof Error) {
-            const origErrStack = this.value.stack?.split('\n').map(line => origErrorPrefix+line).join('\n')
-            return origErrorPrefix+'Original error:\n' + origErrStack
+            const origErrStack = this.value.stack?.split('\n').map(line => origErrorPrefix + line).join('\n')
+            return origErrorPrefix + 'Original error:\n' + origErrStack
         }
         if (typeof this.value === 'object') {
-            return origErrorPrefix+'Original error is object';
+            return origErrorPrefix + 'Original error is object';
         }
         if (typeof this.value === 'number') {
-            return origErrorPrefix+`Original error is: ${this.value}`;
+            return origErrorPrefix + `Original error is: ${this.value}`;
         }
         if (typeof this.value === 'string') {
-            return origErrorPrefix+`Original error is: "${this.value}"`;
+            return origErrorPrefix + `Original error is: "${this.value}"`;
         }
     }
 
@@ -326,14 +326,14 @@ class OK<Val> implements Result<Val, never> {
         return Ok(mapper(this.value));
     }
 
-    mapOrElse<MappedVal>(mapper: (val: Val) => MappedVal, _fallback: (err: never) => any ): Result<MappedVal, never> {
+    mapOrElse<MappedVal>(mapper: (val: Val) => MappedVal, _fallback: (err: never) => any): Result<MappedVal, never> {
         return Ok(mapper(this.value));
     }
 
     mapErr<MappedErr>(_mapper: (err: never) => any): Result<Val, MappedErr> {
         return Ok(this.value)
     }
-    
+
     toAsync(this: Result<Val, never>): AsyncResult<Val, never> {
         return AsyncResult.fromResult(this);
     }
@@ -360,23 +360,41 @@ export function toResult<T, E>(fn: () => T): Result<T, E> {
     try {
         const val = fn();
         return Ok(val);
-    } catch(e) {
+    } catch (e) {
         return Err(e as E);
     }
 }
 
-type Fn<T> = (...params: any[]) => T;
-type ResFn<T, E, F extends Fn<T>> = (...params: Parameters<F>) => Result<T, E>;
 /**
- * @description Catches exceptions and converts them into Result
-*/
-export function resultify<T, E, F extends Fn<T>>(fn: F, mapErr: (err: unknown) => E): ResFn<T, E, F> {
-    return (...params) => { 
+ * @description Creates function returning Result<T, E> from provided FN returning T and
+ *              optional error mapper returning E. If FN throws exception, it is caught and passed to the error mapper.
+ * @example
+ * const rawFn = (a: number) => {
+ *     if (a < 0) {
+ *         throw new Error('not today')
+ *     }
+ *     return a;
+ * };
+ * const fn = resultify(
+ *     rawFn,
+ *     // Thrown exception must be mapped if we want it to have types. Because thrown exception is always unknown.
+ *     err => (err instanceof Error) ? err.message : 'unknown err'
+ * ); // (a: number) => Result<number, string>
+ * const res = fn(-2); // Result<number, string>
+ * res.err() // 'not today'
+ */
+export function resultify<TRes, TParams extends any[], E = unknown>(
+    fn: (...params: TParams) => TRes, mapErr?: (err: unknown) => E
+): (...params: TParams) => Result<TRes, E> {
+    return (...params: Parameters<typeof fn>) => {
         try {
             const val = fn(...params);
             return Ok(val);
-        } catch(e) {
-            return Err(mapErr(e));
+        } catch (e) {
+            if (mapErr) {
+                return Err(mapErr(e));
+            }
+            return Err(e) as Result<TRes, E>;
         }
     }
 }

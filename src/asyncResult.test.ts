@@ -2,7 +2,7 @@
 import { describe, expect, it } from '@jest/globals';
 import { Err, Ok } from './result';
 
-import {AsyncResult, asyncResultify} from './asyncResult';
+import { AsyncResult, asyncResultify } from './asyncResult';
 
 describe('Constructors', () => {
     it('Simple Ok async result constructed from Ok result resolves to the provided result', async () => {
@@ -37,7 +37,7 @@ describe('Result methods', () => {
         const asyncRes = AsyncResult.fromResult(Err(1))
         expect(asyncRes.unwrap()).rejects.toThrow();
     });
-    
+
     it('composite test showing all simple result getters', async () => {
         const asyncOkRes = AsyncResult.fromResult(Ok(1))
         expect(await asyncOkRes.ok()).toEqual(1);
@@ -46,7 +46,7 @@ describe('Result methods', () => {
         expect(await asyncOkRes.isErr()).toEqual(false);
         expect(await asyncOkRes.expect('err')).toEqual(1);
         expect(await asyncOkRes.unwrapOr(2)).toEqual(1);
-        expect(await asyncOkRes.unwrapOrElse(() => { 
+        expect(await asyncOkRes.unwrapOrElse(() => {
             expect('to not have been called').toBe(true);
             return 2;
         })).toEqual(1);
@@ -60,10 +60,10 @@ describe('Result methods', () => {
         expect(await asyncErrRes.isErr()).toEqual(true);
         expect(await asyncErrRes.expectErr('err')).toEqual(1);
         expect(await asyncErrRes.unwrapOr(2)).toEqual(2);
-        expect(await asyncErrRes.unwrapOrElse(() => { 
+        expect(await asyncErrRes.unwrapOrElse(() => {
             return 2;
         })).toEqual(2);
-        expect(await asyncErrRes.unwrapOrElse(async () => { 
+        expect(await asyncErrRes.unwrapOrElse(async () => {
             return 2;
         })).toEqual(2);
         expect(asyncErrRes.unwrap()).rejects.toThrow();
@@ -76,7 +76,7 @@ describe('Result methods', () => {
 
 describe('mappers', () => {
     it('inspect gets called with Result value if Result is Ok', async () => {
-        let inspected: number|undefined = undefined;
+        let inspected: number | undefined = undefined;
         await AsyncResult.fromResult(Ok(5)).inspect(val => inspected = val).promise;
         expect(inspected).toEqual(5);
     });
@@ -88,12 +88,12 @@ describe('mappers', () => {
     });
 
     it('inspectErr gets called with Result error if Result is Err', async () => {
-        let inspected: number|undefined = undefined;
+        let inspected: number | undefined = undefined;
         await AsyncResult.fromResult(Err(5)).inspectErr(val => inspected = val).promise;
         expect(inspected).toEqual(5);
     });
 
-    it('inspectErr does not get called if Result is Err', async () => {
+    it('inspectErr does not get called if Result is Ok', async () => {
         await AsyncResult.fromResult(Ok(5)).inspectErr(() => {
             expect('to not have been called').toBe(true);
         }).promise;
@@ -101,13 +101,13 @@ describe('mappers', () => {
 
     it('map runs provided mapper on value of Result, and creates new Result', async () => {
         const res1 = AsyncResult.fromResult(Ok(5))
-        const res2 = res1.map(val => val+1);
+        const res2 = res1.map(val => val + 1);
         expect(await res1.unwrap()).toEqual(5)
         expect(await res2.unwrap()).toEqual(6)
     });
     it('async map runs provided mapper on value of Result, and creates new Result', async () => {
         const res1 = AsyncResult.fromResult(Ok(5))
-        const res2 = res1.map(async val => val+1);
+        const res2 = res1.map(async val => val + 1);
         expect(await res1.unwrap()).toEqual(5)
         expect(await res2.unwrap()).toEqual(6)
     });
@@ -122,13 +122,13 @@ describe('mappers', () => {
 
     it('mapErr runs provided mapper on err of Result, and creates new Result', async () => {
         const res1 = AsyncResult.fromResult(Err(5))
-        const res2 = res1.mapErr(val => val+1);
+        const res2 = res1.mapErr(val => val + 1);
         expect(await res1.unwrapErr()).toEqual(5)
         expect(await res2.unwrapErr()).toEqual(6)
     });
     it('async mapErr runs provided mapper on err of Result, and creates new Result', async () => {
         const res1 = AsyncResult.fromResult(Err(5))
-        const res2 = res1.mapErr(async val => val+1);
+        const res2 = res1.mapErr(async val => val + 1);
         expect(await res1.unwrapErr()).toEqual(5)
         expect(await res2.unwrapErr()).toEqual(6)
     });
@@ -143,7 +143,7 @@ describe('mappers', () => {
 
     it('mapOrElse runs provided mapper on value of Result, and creates new Result', async () => {
         const res1 = AsyncResult.fromResult(Ok(5))
-        const res2 = res1.mapOrElse(val => val+1, () => { 
+        const res2 = res1.mapOrElse(val => val + 1, () => {
             expect('to not have been called').toBe(true)
             return 0;
         });
@@ -152,7 +152,7 @@ describe('mappers', () => {
     });
     it('async mapOrElse runs provided mapper on value of Result, and creates new Result', async () => {
         const res1 = AsyncResult.fromResult(Ok(5))
-        const res2 = res1.mapOrElse(async val => val+1, () => { 
+        const res2 = res1.mapOrElse(async val => val + 1, () => {
             expect('to not have been called').toBe(true)
             return 0;
         });
@@ -162,18 +162,18 @@ describe('mappers', () => {
 
     it('mapOrElse runs provided fallback on err of Result, and creates new Ok Result', async () => {
         const res1 = AsyncResult.fromResult(Err(5))
-        const res2 = res1.mapOrElse(() => { 
+        const res2 = res1.mapOrElse(() => {
             expect('to not have been called').toBe(true)
             return 0;
-        }, err => err+1);
+        }, err => err + 1);
         expect(await res2.unwrap()).toEqual(6)
     });
     it('async mapOrElse runs provided fallback on err of Result, and creates new Ok Result', async () => {
         const res1 = AsyncResult.fromResult(Err(5))
-        const res2 = res1.mapOrElse(() => { 
+        const res2 = res1.mapOrElse(async () => {
             expect('to not have been called').toBe(true)
             return 0;
-        }, err => err+1);
+        }, err => err + 1);
         expect(await res2.unwrap()).toEqual(6)
     });
 });

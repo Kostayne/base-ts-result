@@ -8,12 +8,12 @@ export class AsyncResult<Val, Err> {
 
     /**
      * @param promise
-     * @description AsyncResult.fromPromise(promise, mapError) will return AsyncResult containing the promise.
+     * @description AsyncResult.fromPromise(promise) will return AsyncResult containing the promise.
      * @example
      * const resPromise = AsyncResult.fromPromise(Promise.resolve(1));
      * // Type of resPromise is AsyncResult<number, unknown>
      */
-    static fromPromise<Val>( promise: Promise<Val>): AsyncResult<Val, unknown> {
+    static fromPromise<Val>(promise: Promise<Val>): AsyncResult<Val, unknown> {
         const resultRawPromise: Promise<Result<Val, unknown>> = promise.then(val => Ok(val)).catch(err => Err(err));
         return new AsyncResult(resultRawPromise);
     }
@@ -37,7 +37,7 @@ export class AsyncResult<Val, Err> {
      * const awaited  = await resPromise.promise;
      * // Type of awaited is Result<number, string>
      */
-    readonly promise: Promise<Result<Val, Err>>; 
+    readonly promise: Promise<Result<Val, Err>>;
     constructor(promise: Promise<Result<Val, Err>>) {
         this.promise = promise;
     }
@@ -163,7 +163,7 @@ export class AsyncResult<Val, Err> {
      * res = AsyncResult.fromResult(Err('error msg'));
      * console.log(await res.ok()); // undefined
      */
-    async ok(): Promise<Val|undefined> {
+    async ok(): Promise<Val | undefined> {
         return (await this.promise).ok();
     }
 
@@ -176,7 +176,7 @@ export class AsyncResult<Val, Err> {
      * res = AsyncResult.fromResult(Err('error msg'));
      * console.log(await res.err()); // 'error msg'
      */
-    async err(): Promise<Err|undefined> {
+    async err(): Promise<Err | undefined> {
         return (await this.promise).err();
     }
 
@@ -217,7 +217,7 @@ export class AsyncResult<Val, Err> {
      */
     map<NewVal>(mapper: (val: Val) => AsyncMapped<NewVal>): AsyncResult<NewVal, Err> {
         return this.thenInternal(async (res): Promise<Result<NewVal, Err>> => {
-            if(res.isOk()) {
+            if (res.isOk()) {
                 return Ok(await mapper(res.unwrap()))
             } else {
                 return Err(res.unwrapErr());
@@ -242,7 +242,7 @@ export class AsyncResult<Val, Err> {
         fallback: (err: Err) => AsyncMapped<NewVal>
     ): AsyncResult<NewVal, Err> {
         return this.thenInternal(async (res): Promise<Result<NewVal, Err>> => {
-            if(res.isOk()) {
+            if (res.isOk()) {
                 return Ok(await mapper(res.unwrap()))
             } else {
                 return Ok(await fallback(res.unwrapErr()));
@@ -259,7 +259,7 @@ export class AsyncResult<Val, Err> {
      */
     mapErr<NewErr>(mapper: (err: Err) => AsyncMapped<NewErr>): AsyncResult<Val, NewErr> {
         return this.thenInternal(async (res): Promise<Result<Val, NewErr>> => {
-            if(res.isOk()) {
+            if (res.isOk()) {
                 return Ok(res.unwrap())
             } else {
                 return Err(await mapper(res.unwrapErr()));
@@ -274,13 +274,35 @@ export class AsyncResult<Val, Err> {
     }
 }
 
-type AsyncMapped<T> = T|Promise<T>
+type AsyncMapped<T> = T | Promise<T>
 
-type AsyncFn<T> = (...params: any[]) => Promise<T>;
-type AsyncResFn<T, E, F extends AsyncFn<T>> = (...params: Parameters<F>) => AsyncResult<T, E>;
 /**
- * @description Creates function returning AsyncResult from provided async function and error mapper
+ * @description Creates function returning AsyncResult<T, E> from provided FN returning T or Promise<T> and
+ *              optional error mapper returning E or Promise<E>.
+ *              If FN throws exception, it is caught and passed to the error mapper.
+ * @example
+ * const rawFn = async (a: number) => {
+ *     if (a < 0) {
+ *         throw new Error('not today')
+ *     }
+ *     return a;
+ * };
+ * const fn = asyncResultify(
+ *     rawFn,
+ *     // Thrown exception must be mapped if we want it to have types. Because thrown exception is always unknown.
+ *     async err => (err instanceof Error) ? err.message : 'unknown err'
+ * ); // (a: number) => AsyncResult<number, string>
+ * const res = fn(-2); // AsyncResult<number, string>
+ * await res.err() // 'not today'
  */
-export function asyncResultify<T, E, F extends AsyncFn<T>>(fn: F, mapErr: (err: unknown) => E): AsyncResFn<T, E, F> {
-    return (...params) => AsyncResult.fromPromise(fn(...params)).mapErr(mapErr);
+export function asyncResultify<TRes, TParams extends any[], E = unknown>(
+    fn: (...params: TParams) => Promise<TRes>, mapErr?: (err: unknown) => AsyncMapped<E>
+): (...params: TParams) => AsyncResult<TRes, E> {
+    return (...params: Parameters<typeof fn>) => {
+        const asyncPromise = AsyncResult.fromPromise(fn(...params));
+        if (mapErr) {
+            return asyncPromise.mapErr(mapErr);
+        }
+        return asyncPromise as AsyncResult<TRes, E>;
+    }
 }
