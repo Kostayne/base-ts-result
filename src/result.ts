@@ -380,8 +380,7 @@ export function toResult<T, E>(fn: () => T): Result<T, E> {
  * };
  * const fn = resultify(
  *     rawFn,
- *     // Thrown exception must be mapped if we want it to have types. Because thrown exception is always unknown.
- *     err => (err instanceof Error) ? err.message : 'unknown err'
+ *     err => err.message
  * ); // (a: number) => Result<number, string>
  * const res = fn(-2); // Result<number, string>
  * res.err() // 'not today'

@@ -291,8 +291,7 @@ type AsyncMapped<T> = T | Promise<T>
  * };
  * const fn = asyncResultify(
  *     rawFn,
- *     // Thrown exception must be mapped if we want it to have types. Because thrown exception is always unknown.
- *     async err => (err instanceof Error) ? err.message : 'unknown err'
+ *     async err => err.message
  * ); // (a: number) => AsyncResult<number, string>
  * const res = fn(-2); // AsyncResult<number, string>
  * await res.err() // 'not today'
