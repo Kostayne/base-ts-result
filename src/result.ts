@@ -1,4 +1,7 @@
 import { AsyncResult } from "./asyncResult";
+import { ResultCaughtError, thrownUnknownToError } from "./baseResultError";
+
+export type ResultPromise<T, E> = Promise<Result<T, E>>;
 
 export interface Result<Val, Err> {
     readonly value: Val | Err;
@@ -383,18 +386,19 @@ export function toResult<T, E>(fn: () => T): Result<T, E> {
  * const res = fn(-2); // Result<number, string>
  * res.err() // 'not today'
  */
-export function resultify<TRes, TParams extends any[], E = unknown>(
-    fn: (...params: TParams) => TRes, mapErr?: (err: unknown) => E
+export function resultify<TRes, TParams extends any[], E = ResultCaughtError>(
+    fn: (...params: TParams) => TRes, mapErr?: (err: ResultCaughtError) => E
 ): (...params: TParams) => Result<TRes, E> {
     return (...params: Parameters<typeof fn>) => {
         try {
             const val = fn(...params);
             return Ok(val);
-        } catch (e) {
+        } catch (err) {
+            const wrappedErr = thrownUnknownToError(err);
             if (mapErr) {
-                return Err(mapErr(e));
+                return Err(mapErr(wrappedErr));
             }
-            return Err(e) as Result<TRes, E>;
+            return Err(wrappedErr) as unknown as Result<TRes, E>;
         }
     }
 }

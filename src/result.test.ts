@@ -1,6 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 import { Err, Ok, Result, resultify, toResult } from './result';
 
+
 describe('Constructors', () => {
     it('Err fn produces correct Result', () => {
         const errRes = Err('Test err');
@@ -120,7 +121,7 @@ describe('Result methods', () => {
 
 describe('mappers', () => {
     it('inspect gets called with Result value if Result is Ok', () => {
-        let inspected: number|undefined = undefined;
+        let inspected: number | undefined = undefined;
         Ok(5).inspect(val => inspected = val)
         expect(inspected).toEqual(5);
     });
@@ -132,7 +133,7 @@ describe('mappers', () => {
     });
 
     it('inspectErr gets called with Result error if Result is Err', () => {
-        let inspected: number|undefined = undefined;
+        let inspected: number | undefined = undefined;
         Err(5).inspectErr(val => inspected = val)
         expect(inspected).toEqual(5);
     });
@@ -145,7 +146,7 @@ describe('mappers', () => {
 
     it('map runs provided mapper on value of Result, and creates new Result', () => {
         const res1 = Ok(5)
-        const res2 = res1.map(val => val+1);
+        const res2 = res1.map(val => val + 1);
         expect(res1).not.toStrictEqual(res2);
         expect(res1.unwrap()).toEqual(5)
         expect(res2.unwrap()).toEqual(6)
@@ -161,7 +162,7 @@ describe('mappers', () => {
 
     it('mapErr runs provided mapper on err of Result, and creates new Result', () => {
         const res1 = Err(5)
-        const res2 = res1.mapErr(val => val+1);
+        const res2 = res1.mapErr(val => val + 1);
         expect(res1).not.toStrictEqual(res2);
         expect(res1.unwrapErr()).toEqual(5)
         expect(res2.unwrapErr()).toEqual(6)
@@ -177,7 +178,7 @@ describe('mappers', () => {
 
     it('mapOrElse runs provided mapper on value of Result, and creates new Result', () => {
         const res1 = Ok(5)
-        const res2 = res1.mapOrElse(val => val+1, () => expect('to not have been called').toBe(true));
+        const res2 = res1.mapOrElse(val => val + 1, () => expect('to not have been called').toBe(true));
         expect(res1).not.toStrictEqual(res2);
         expect(res1.unwrap()).toEqual(5)
         expect(res2.unwrap()).toEqual(6)
@@ -185,7 +186,7 @@ describe('mappers', () => {
 
     it('mapOrElse runs provided fallback on err of Result, and creates new Ok Result', () => {
         const res1 = Err(5)
-        const res2 = res1.mapOrElse(() => expect('to not have been called').toBe(true), err => err+1);
+        const res2 = res1.mapOrElse(() => expect('to not have been called').toBe(true), err => err + 1);
         expect(res2.unwrap()).toEqual(6)
     });
 });
@@ -201,6 +202,18 @@ describe('utils', () => {
         () => {
             const test = resultify(() => { throw 1; }, () => 'err')
             expect(test()).toEqual(Err('err'));
+        }
+    )
+
+    it(
+        'resultify thrown non-Error err can be accessed',
+        () => {
+            const test = resultify(() => { throw 1; })
+
+            const err = test().unwrapErr();
+            if ('origValue' in err) {
+                expect(err.origValue).toEqual(1);
+            }
         }
     )
 

@@ -3,6 +3,7 @@ import { describe, expect, it } from '@jest/globals';
 import { Err, Ok } from './result';
 
 import { AsyncResult, asyncResultify } from './asyncResult';
+import { BaseResultError } from './baseResultError';
 
 describe('Constructors', () => {
     it('Simple Ok async result constructed from Ok result resolves to the provided result', async () => {
@@ -22,10 +23,22 @@ describe('Constructors', () => {
         expect(res).toEqual(Ok(1));
     });
 
-    it('Simple Err async result constructed from promise of errRes, resolves to Err result of provided value', async () => {
-        const res = await AsyncResult.fromPromise(Promise.reject(1)).promise;
-        expect(res).toEqual(Err(1));
-    });
+    it(
+        'Simple Err async result constructed from promise of errRes which rejects with non-Error value, '
+        + 'resolves to Err of the value wrapped with BaseResultError',
+        async () => {
+            const res = await AsyncResult.fromPromise(Promise.reject(1)).promise;
+            expect(res).toEqual(Err(new BaseResultError(1)));
+        }
+    );
+    it(
+        'Simple Err async result constructed from promise of errRes which rejects with Error value, '
+        + 'resolves to Err of the value',
+        async () => {
+            const res = await AsyncResult.fromPromise(Promise.reject(new Error('err'))).promise;
+            expect(res).toEqual(Err(new Error('err')));
+        }
+    );
 });
 
 describe('Result methods', () => {
