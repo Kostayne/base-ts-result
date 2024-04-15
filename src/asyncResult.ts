@@ -1,4 +1,4 @@
-import { ResultCaughtError, thrownUnknownToError } from "./baseResultError";
+import { ResultBaseError, thrownUnknownToBaseError } from "./baseResultError";
 import { Err, Ok, Result } from "./result";
 
 
@@ -15,8 +15,8 @@ export class AsyncResult<Val, Err> {
      * const resPromise = AsyncResult.fromPromise(Promise.resolve(1));
      * // Type of resPromise is AsyncResult<number, unknown>
      */
-    static fromPromise<Val>(promise: Promise<Val>): AsyncResult<Val, ResultCaughtError> {
-        const resultRawPromise: Promise<Result<Val, ResultCaughtError>> = promise.then(val => Ok(val)).catch(err => Err(thrownUnknownToError(err)));
+    static fromPromise<Val>(promise: Promise<Val>): AsyncResult<Val, ResultBaseError> {
+        const resultRawPromise: Promise<Result<Val, ResultBaseError>> = promise.then(val => Ok(val)).catch(err => Err(thrownUnknownToBaseError(err)));
         return new AsyncResult(resultRawPromise);
     }
 
@@ -296,8 +296,8 @@ type AsyncMapped<T> = T | Promise<T>
  * const res = fn(-2); // AsyncResult<number, string>
  * await res.err() // 'not today'
  */
-export function asyncResultify<TRes, TParams extends any[], E = ResultCaughtError>(
-    fn: (...params: TParams) => Promise<TRes>, mapErr?: (err: ResultCaughtError) => AsyncMapped<E>
+export function asyncResultify<TRes, TParams extends any[], E = ResultBaseError>(
+    fn: (...params: TParams) => Promise<TRes>, mapErr?: (err: ResultBaseError) => AsyncMapped<E>
 ): (...params: TParams) => AsyncResult<TRes, E> {
     return (...params: Parameters<typeof fn>) => {
         const asyncPromise = AsyncResult.fromPromise(fn(...params));
@@ -315,6 +315,6 @@ export function asyncResultify<TRes, TParams extends any[], E = ResultCaughtErro
  * const promise = Promise.reject();
  * const result = toAsyncResult(promise);
  */
-export function toAsyncResult<Val>(promise: Promise<Val>): AsyncResult<Val, ResultCaughtError> {
+export function toAsyncResult<Val>(promise: Promise<Val>): AsyncResult<Val, ResultBaseError> {
     return AsyncResult.fromPromise(promise);
 }

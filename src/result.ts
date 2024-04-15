@@ -1,5 +1,5 @@
 import { AsyncResult } from "./asyncResult";
-import { ResultCaughtError, thrownUnknownToError } from "./baseResultError";
+import { ResultBaseError, thrownUnknownToBaseError } from "./baseResultError";
 
 export type ResultPromise<T, E> = Promise<Result<T, E>>;
 
@@ -385,15 +385,15 @@ export function toResult<T, E>(fn: () => T): Result<T, E> {
  * const res = fn(-2); // Result<number, string>
  * res.err() // 'not today'
  */
-export function resultify<TRes, TParams extends any[], E = ResultCaughtError>(
-    fn: (...params: TParams) => TRes, mapErr?: (err: ResultCaughtError) => E
+export function resultify<TRes, TParams extends any[], E = ResultBaseError>(
+    fn: (...params: TParams) => TRes, mapErr?: (err: ResultBaseError) => E
 ): (...params: TParams) => Result<TRes, E> {
     return (...params: Parameters<typeof fn>) => {
         try {
             const val = fn(...params);
             return Ok(val);
         } catch (err) {
-            const wrappedErr = thrownUnknownToError(err);
+            const wrappedErr = thrownUnknownToBaseError(err);
             if (mapErr) {
                 return Err(mapErr(wrappedErr));
             }
