@@ -3,7 +3,6 @@ import { describe, expect, it } from '@jest/globals';
 import { Err, Ok } from './result';
 
 import { AsyncResult, asyncResultify } from './asyncResult';
-import { BaseResultError } from './baseResultError';
 
 describe('Constructors', () => {
     it('Simple Ok async result constructed from Ok result resolves to the provided result', async () => {
@@ -28,7 +27,11 @@ describe('Constructors', () => {
         + 'resolves to Err of the value wrapped with BaseResultError',
         async () => {
             const res = await AsyncResult.fromPromise(Promise.reject(1)).promise;
-            expect(res).toEqual(Err(new BaseResultError(1)));
+            expect(res.err()).toEqual({
+                message: "Caught exotic value (number): 1",
+                name: "BaseError",
+                origValue: 1,
+            });
         }
     );
     it(
