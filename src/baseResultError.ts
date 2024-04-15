@@ -7,33 +7,39 @@ export function thrownUnknownToBaseError(origValue: unknown): ResultBaseError {
 	if (origValue instanceof Error) {
 		return origValue
 	}
-
-	const type = Array.isArray(origValue) ? 'array' : typeof origValue;
-	const baseErr: BaseError = {
-		name: 'BaseError',
-		message: `Caught exotic value (${type})`,
-		origValue: origValue
-	}
-	if (typeof origValue?.toString !== 'function') {
-		return baseErr;
-	}
-
-	const newMsg = origValue.toString();
-
-	if (typeof newMsg !== 'string') {
-		return baseErr;
-	}
-
-	baseErr.message += `: ${newMsg}`;
-	return baseErr
+	return new BaseError(origValue);
 }
 
 /**
  *  @description Error-like wrapper for non-Error values caught by resultify and fromPromise.
  */
-interface BaseError extends Error {
+class BaseError implements Error {
+	name = 'BaseError';
+	message: string;
+	stack?: string | undefined;
 	/**
 	 * @description exotic value that was thrown
 	 */
 	origValue: unknown;
+
+	constructor(origValue: unknown) {
+		const type = Array.isArray(origValue) ? 'array' : typeof origValue;
+		this.message = `Caught exotic value (${type})`;
+		this.origValue = origValue;
+		if (typeof origValue?.toString !== 'function') {
+			return;
+		}
+
+		const newMsg = origValue.toString();
+
+		if (typeof newMsg !== 'string') {
+			return;
+		}
+
+		this.message += `: ${newMsg}`;
+	}
+	toString() {
+		return `${this.name}: ${this.message}`;
+	}
+
 }

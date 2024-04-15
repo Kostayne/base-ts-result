@@ -27,11 +27,7 @@ describe('Constructors', () => {
         + 'resolves to Err of the value wrapped with BaseResultError',
         async () => {
             const res = await AsyncResult.fromPromise(Promise.reject(1)).promise;
-            expect(res.err()).toEqual({
-                message: "Caught exotic value (number): 1",
-                name: "BaseError",
-                origValue: 1,
-            });
+            expect(res.unwrapErr().toString()).toMatchInlineSnapshot(`"BaseError: Caught exotic value (number): 1"`);
         }
     );
     it(
