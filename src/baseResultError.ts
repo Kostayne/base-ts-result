@@ -2,7 +2,7 @@
 /**
  *  @description Type for errors caught by resultify and fromPromise. Thrown non-Error values are converted to Error
  */
-export type ResultBaseError = BaseError | Error;
+export type ResultBaseError = Error & { origValue?: unknown };
 export function thrownUnknownToBaseError(origValue: unknown): ResultBaseError {
 	if (origValue instanceof Error) {
 		return origValue
