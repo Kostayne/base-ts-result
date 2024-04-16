@@ -1,12 +1,14 @@
 {
   "name": "base-ts-result",
-  "version": "2.3.0",
+  "version": "3.0.0",
   "description": "Better error handling stolen from rust",
   "main": "dist/index.js",
   "scripts": {
     "test": "jest",
     "build": "rm -rf dist && tsc",
-    "prepublishOnly": "npm run test && npm run build"
+    "prepublishOnly": "npm run lint:write && npm run test && npm run build",
+    "lint:check": "npx @biomejs/biome format ./src",
+    "lint:write": "npx @biomejs/biome format --write ./src"
   },
   "author": "",
   "license": "MIT",
@@ -15,11 +17,11 @@
     "url": "https://github.com/Kostayne/base-ts-result"
   },
   "devDependencies": {
+    "@biomejs/biome": "1.7.0",
     "@jest/globals": "^29.6.2",
     "jest": "^29.6.2",
     "ts-jest": "^29.1.1",
     "typescript": "^5.1.6"
   },
-
   "keywords": ["rust", "error", "error handling", "result", "ts", "typescript"]
 }

@@ -1,6 +1,5 @@
 import { describe, expect, it } from '@jest/globals';
-import { Err, Ok, Result, resultify, toResult } from './result';
-
+import { Err, Ok, type Result, resultify, toResult } from './result';
 
 describe('Constructors', () => {
     it('Err fn produces correct Result', () => {
@@ -85,136 +84,147 @@ describe('Result methods', () => {
     });
 
     it('ToResult returns ERR if exception was thrown', () => {
-        const res = toResult<string, string>(() => { throw new Error('as') });
+        const res = toResult<string, string>(() => {
+            throw new Error('as');
+        });
         expect(res.unwrapOr('err')).toBe('err');
     });
 
     it('isOk returns true if result is Ok', () => {
-        expect(Ok(false).isOk()).toEqual(true)
-    })
+        expect(Ok(false).isOk()).toEqual(true);
+    });
     it('isOk returns false if result is Err', () => {
-        expect(Err(true).isOk()).toEqual(false)
-    })
+        expect(Err(true).isOk()).toEqual(false);
+    });
     it('isErr returns false if result is Ok', () => {
-        expect(Ok(true).isErr()).toEqual(false)
-    })
+        expect(Ok(true).isErr()).toEqual(false);
+    });
     it('isErr returns true if result is Err', () => {
-        expect(Err(false).isErr()).toEqual(true)
-    })
+        expect(Err(false).isErr()).toEqual(true);
+    });
 
     it('ok returns Result value if result is Ok', () => {
-        expect(Ok(5).ok()).toEqual(5)
+        expect(Ok(5).ok()).toEqual(5);
     });
 
     it('ok returns undefined if result is Err', () => {
-        expect(Err(5).ok()).toEqual(undefined)
+        expect(Err(5).ok()).toEqual(undefined);
     });
 
     it('err returns Result error if result is Err', () => {
-        expect(Err(5).err()).toEqual(5)
+        expect(Err(5).err()).toEqual(5);
     });
 
     it('err returns undefined if result is Ok', () => {
-        expect(Ok(5).err()).toEqual(undefined)
+        expect(Ok(5).err()).toEqual(undefined);
     });
 });
 
 describe('mappers', () => {
     it('inspect gets called with Result value if Result is Ok', () => {
         let inspected: number | undefined = undefined;
-        Ok(5).inspect(val => inspected = val)
+        Ok(5).inspect((val) => (inspected = val));
         expect(inspected).toEqual(5);
     });
 
     it('inspect does not get called if Result is Err', () => {
         Err(5).inspect(() => {
             expect('to not have been called').toBe(true);
-        })
+        });
     });
 
     it('inspectErr gets called with Result error if Result is Err', () => {
         let inspected: number | undefined = undefined;
-        Err(5).inspectErr(val => inspected = val)
+        Err(5).inspectErr((val) => (inspected = val));
         expect(inspected).toEqual(5);
     });
 
     it('inspectErr does not get called if Result is Err', () => {
         Ok(5).inspectErr(() => {
             expect('to not have been called').toBe(true);
-        })
+        });
     });
 
     it('map runs provided mapper on value of Result, and creates new Result', () => {
-        const res1 = Ok(5)
-        const res2 = res1.map(val => val + 1);
+        const res1 = Ok(5);
+        const res2 = res1.map((val) => val + 1);
         expect(res1).not.toStrictEqual(res2);
-        expect(res1.unwrap()).toEqual(5)
-        expect(res2.unwrap()).toEqual(6)
+        expect(res1.unwrap()).toEqual(5);
+        expect(res2.unwrap()).toEqual(6);
     });
 
     it('map does not get run on Err', () => {
-        const res1 = Err(5)
+        const res1 = Err(5);
         const res2 = res1.map(() => {
             expect('to not have been called').toBe(true);
         });
-        expect(res2.unwrapErr()).toEqual(5)
+        expect(res2.unwrapErr()).toEqual(5);
     });
 
     it('mapErr runs provided mapper on err of Result, and creates new Result', () => {
-        const res1 = Err(5)
-        const res2 = res1.mapErr(val => val + 1);
+        const res1 = Err(5);
+        const res2 = res1.mapErr((val) => val + 1);
         expect(res1).not.toStrictEqual(res2);
-        expect(res1.unwrapErr()).toEqual(5)
-        expect(res2.unwrapErr()).toEqual(6)
+        expect(res1.unwrapErr()).toEqual(5);
+        expect(res2.unwrapErr()).toEqual(6);
     });
 
     it('mapErr does not get run on Ok', () => {
-        const res1 = Ok(5)
+        const res1 = Ok(5);
         const res2 = res1.mapErr(() => {
             expect('to not have been called').toBe(true);
         });
-        expect(res2.unwrap()).toEqual(5)
+        expect(res2.unwrap()).toEqual(5);
     });
 
     it('mapOrElse runs provided mapper on value of Result, and creates new Result', () => {
-        const res1 = Ok(5)
-        const res2 = res1.mapOrElse(val => val + 1, () => expect('to not have been called').toBe(true));
+        const res1 = Ok(5);
+        const res2 = res1.mapOrElse(
+            (val) => val + 1,
+            () => expect('to not have been called').toBe(true),
+        );
         expect(res1).not.toStrictEqual(res2);
-        expect(res1.unwrap()).toEqual(5)
-        expect(res2.unwrap()).toEqual(6)
+        expect(res1.unwrap()).toEqual(5);
+        expect(res2.unwrap()).toEqual(6);
     });
 
     it('mapOrElse runs provided fallback on err of Result, and creates new Ok Result', () => {
-        const res1 = Err(5)
-        const res2 = res1.mapOrElse(() => expect('to not have been called').toBe(true), err => err + 1);
-        expect(res2.unwrap()).toEqual(6)
+        const res1 = Err(5);
+        const res2 = res1.mapOrElse(
+            () => expect('to not have been called').toBe(true),
+            (err) => err + 1,
+        );
+        expect(res2.unwrap()).toEqual(6);
     });
 });
 
 describe('utils', () => {
     it('resultify Ok result - calling new function returns AsyncResult', () => {
-        const test = resultify(() => 1, () => 1)
+        const test = resultify(
+            () => 1,
+            () => 1,
+        );
         expect(test()).toEqual(Ok(1));
-    })
+    });
 
-    it(
-        'resultify Err result - calling new function returns AsyncResult and errMapper gets applied to result',
-        () => {
-            const test = resultify(() => { throw 1; }, () => 'err')
-            expect(test()).toEqual(Err('err'));
+    it('resultify Err result - calling new function returns AsyncResult and errMapper gets applied to result', () => {
+        const test = resultify(
+            () => {
+                throw 1;
+            },
+            () => 'err',
+        );
+        expect(test()).toEqual(Err('err'));
+    });
+
+    it('resultify thrown non-Error err can be accessed', () => {
+        const test = resultify(() => {
+            throw 1;
+        });
+
+        const err = test().unwrapErr();
+        if ('origValue' in err) {
+            expect(err.origValue).toEqual(1);
         }
-    )
-
-    it(
-        'resultify thrown non-Error err can be accessed',
-        () => {
-            const test = resultify(() => { throw 1; })
-
-            const err = test().unwrapErr();
-            if ('origValue' in err) {
-                expect(err.origValue).toEqual(1);
-            }
-        }
-    )
-
+    });
 });

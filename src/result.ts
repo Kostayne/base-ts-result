@@ -1,5 +1,5 @@
-import { AsyncResult } from "./asyncResult";
-import { ResultBaseError, thrownUnknownToBaseError } from "./baseResultError";
+import { AsyncResult } from './asyncResult';
+import { type ResultBaseError, thrownUnknownToBaseError } from './baseResultError';
 
 export type ResultPromise<T, E> = Promise<Result<T, E>>;
 
@@ -11,7 +11,7 @@ export interface Result<Val, Err> {
      * @example
      * let res = Ok(5);
      * console.log(res.unwrap()); // 5
-     * 
+     *
      * res = Err('err');
      * console.log(res.unwrap()); // Exception: Tried to unwrap an Error result
      */
@@ -22,7 +22,7 @@ export interface Result<Val, Err> {
      * @example
      * let res = Ok(5);
      * console.log(res.unwrapErr()); // Exception: Tried to unwrap Ok result's error
-     * 
+     *
      * res = Err('error msg');
      * console.log(res.unwrapErr()); // 'error msg'
      */
@@ -34,7 +34,7 @@ export interface Result<Val, Err> {
      * @example
      * let res = Ok(5);
      * console.log(res.unwrapOr(0)); // 5
-     * 
+     *
      * res = Err('error msg');
      * console.log(res.unwrapOr(0)); // 0
      */
@@ -46,7 +46,7 @@ export interface Result<Val, Err> {
      * @example
      * let res = Ok(5);
      * console.log(res.unwrapOrElse(() => 0)); // 5
-     * 
+     *
      * res = Err('error msg');
      * console.log(res.unwrapOrElse(() => 0)); // 0
      */
@@ -58,7 +58,7 @@ export interface Result<Val, Err> {
      * @example
      * let res = Ok(5);
      * console.log(res.expect('provided message')); // 5
-     * 
+     *
      * res = Err('error msg');
      * console.log(res.expect('provided message')); // Exception: provided message
      */
@@ -70,7 +70,7 @@ export interface Result<Val, Err> {
      * @example
      * let res = Ok(5);
      * console.log(res.expectErr('provided message')); // Exception: provided message
-     * 
+     *
      * res = Err('error msg');
      * console.log(res.expectErr('provided message')); // 'error msg'
      */
@@ -81,7 +81,7 @@ export interface Result<Val, Err> {
      * @example
      * let res = Ok(5);
      * console.log(res.isOk()); // true
-     * 
+     *
      * res = Err('error msg');
      * console.log(res.isOk()); // false
      */
@@ -92,7 +92,7 @@ export interface Result<Val, Err> {
      * @example
      * let res = Ok(5);
      * console.log(res.isErr()); // false
-     * 
+     *
      * res = Err('error msg');
      * console.log(res.isErr()); // true
      */
@@ -103,22 +103,22 @@ export interface Result<Val, Err> {
      * @example
      * let res = Ok(5);
      * console.log(res.ok()); // 5
-     * 
+     *
      * res = Err('error msg');
      * console.log(res.ok()); // undefined
      */
-    ok(): Val | undefined,
+    ok(): Val | undefined;
 
     /**
      * @description result.err() returns undefined if Result is Ok, or contained error if Result is Err
      * @example
      * let res = Ok(5);
      * console.log(res.err()); // undefined
-     * 
+     *
      * res = Err('error msg');
      * console.log(res.err()); // 'error msg'
      */
-    err(): Err | undefined,
+    err(): Err | undefined;
 
     /**
      * @param inspector
@@ -126,7 +126,7 @@ export interface Result<Val, Err> {
      * @example
      * let res = Ok(5);
      * res.inspect((val) => console.log(`logged ${val}`)); // logged 5
-     * 
+     *
      * res = Err('error msg');
      * res.inspect((val) => console.log(`logged ${val}`)); // <nothing>
      */
@@ -138,7 +138,7 @@ export interface Result<Val, Err> {
      * @example
      * let res = Ok(5);
      * res.inspectErr((val) => console.log(`logged ${val}`)); // <nothing>
-     * 
+     *
      * res = Err('error msg');
      * res.inspectErr((val) => console.log(`logged ${val}`)); // logged error msg
      */
@@ -161,7 +161,7 @@ export interface Result<Val, Err> {
      * @example
      * let res = Ok(5);
      * console.log(res.map((val) => val + 1, err => err + ' suffix').unwrap()); // 6
-     * 
+     *
      * res = Err('error msg');
      * console.log(res.map((val) => val + 1, err => err + ' suffix').unwrapErr()); // error msg suffix
      */
@@ -193,8 +193,11 @@ class ERR<Err> implements Result<never, Err> {
 
     private getAdditionalErrorMessage() {
         if (this.value instanceof Error) {
-            const origErrStack = this.value.stack?.split('\n').map(line => origErrorPrefix + line).join('\n')
-            return origErrorPrefix + 'Original error:\n' + origErrStack
+            const origErrStack = this.value.stack
+                ?.split('\n')
+                .map((line) => origErrorPrefix + line)
+                .join('\n');
+            return origErrorPrefix + 'Original error:\n' + origErrStack;
         }
         if (typeof this.value === 'object') {
             return origErrorPrefix + 'Original error is object';
@@ -216,7 +219,7 @@ class ERR<Err> implements Result<never, Err> {
     }
     unwrapOrElse<Res>(altValFactory: (err: Err) => Res): Res {
         return altValFactory(this.value);
-    };
+    }
 
     expect(msg: string): never {
         this.throwError(msg);
@@ -242,7 +245,7 @@ class ERR<Err> implements Result<never, Err> {
     }
 
     err(): Err {
-        return this.value
+        return this.value;
     }
 
     inspect(_inspector: (val: never) => any): Result<never, Err> {
@@ -259,11 +262,11 @@ class ERR<Err> implements Result<never, Err> {
     }
 
     mapOrElse<MappedVal>(_mapper: any, fallback: (err: Err) => MappedVal): Result<MappedVal, never> {
-        return Ok(fallback(this.value))
+        return Ok(fallback(this.value));
     }
 
     mapErr<MappedErr>(mapper: (err: Err) => MappedErr): Result<never, MappedErr> {
-        return Err(mapper(this.value))
+        return Err(mapper(this.value));
     }
 
     toAsync(this: Result<never, Err>): AsyncResult<never, Err> {
@@ -287,7 +290,7 @@ class OK<Val> implements Result<Val, never> {
     }
     unwrapOrElse(_altValFactory: (err: never) => Val): Val {
         return this.value;
-    };
+    }
 
     expect(_msg: string): Val {
         return this.value;
@@ -297,7 +300,7 @@ class OK<Val> implements Result<Val, never> {
     }
 
     unwrapErr(): never {
-        throw new Error('Tried to unwrap Ok result\'s error');
+        throw new Error("Tried to unwrap Ok result's error");
     }
 
     isOk(): true {
@@ -318,11 +321,11 @@ class OK<Val> implements Result<Val, never> {
 
     inspect(inspector: (val: Val) => any): Result<Val, never> {
         inspector(this.value);
-        return Ok(this.value)
+        return Ok(this.value);
     }
 
     inspectErr(_inspector: (err: never) => any): Result<Val, never> {
-        return Ok(this.value)
+        return Ok(this.value);
     }
 
     map<MappedVal>(mapper: (val: Val) => MappedVal): Result<MappedVal, never> {
@@ -334,7 +337,7 @@ class OK<Val> implements Result<Val, never> {
     }
 
     mapErr<MappedErr>(_mapper: (err: never) => any): Result<Val, MappedErr> {
-        return Ok(this.value)
+        return Ok(this.value);
     }
 
     toAsync(this: Result<Val, never>): AsyncResult<Val, never> {
@@ -358,7 +361,7 @@ export function Err<T>(err: T): ERR<T> {
 
 /**
  * @description Catches exceptions and converts them into Result
-*/
+ */
 export function toResult<T, E>(fn: () => T): Result<T, E> {
     try {
         const val = fn();
@@ -386,7 +389,8 @@ export function toResult<T, E>(fn: () => T): Result<T, E> {
  * res.err() // 'not today'
  */
 export function resultify<TRes, TParams extends any[], E = ResultBaseError>(
-    fn: (...params: TParams) => TRes, mapErr?: (err: ResultBaseError) => E
+    fn: (...params: TParams) => TRes,
+    mapErr?: (err: ResultBaseError) => E,
 ): (...params: TParams) => Result<TRes, E> {
     return (...params: Parameters<typeof fn>) => {
         try {
@@ -399,7 +403,7 @@ export function resultify<TRes, TParams extends any[], E = ResultBaseError>(
             }
             return Err(wrappedErr) as unknown as Result<TRes, E>;
         }
-    }
+    };
 }
 
 export type Ok<T> = OK<T>;

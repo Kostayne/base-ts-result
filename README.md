@@ -10,6 +10,10 @@ Better error handling stolen from rust
 
 * [Install](#Install)
 * [Overview](#Overview)
+    * [Constructors](###Constructors)
+    * [Result](###Result)
+    * [AsyncResult](###AsyncResult)
+    * [Helpers](###Helpers)
 * [Example](#Example)
 * [Sources](#Sources)
 
@@ -21,6 +25,17 @@ pnpm add base-ts-result
 ```
 
 ## Overview
+
+### Constructors
+Handy functions to create Result objects
+
+```ts
+// create success Result
+function Ok<Val>(res: Val): OK<Val>;
+
+// create error Result
+function Err<Err>(err: Err): ERR<Err>;
+```
 
 ### Result
 Interface that contains operation result and interaction methods
@@ -84,10 +99,12 @@ class AsyncResult<Val, Err> {
 
     // Mappers
     map<NewVal>(mapper: (val: Val) => AsyncMapped<NewVal>): AsyncResult<NewVal, Err>;
+
     mapOrElse<NewVal>(
         mapper: (val: Val) => AsyncMapped<NewVal>,
         fallback: (err: Err) => AsyncMapped<NewVal>
     ): AsyncResult<NewVal, Err>;
+
     mapErr<NewErr>(mapper: (err: Err) => AsyncMapped<NewErr>): AsyncResult<Val, NewErr>;
 
     // Utilities
@@ -96,32 +113,34 @@ class AsyncResult<Val, Err> {
 }
 ```
 
-### Constructors
-Handy functions to create Result objects
-
-```ts
-// create success Result
-function Ok<Val>(res: Val): OK<Val>;
-
-// create error Result
-function Err<Err>(err: Err): ERR<Err>;
-```
-
 ### Helpers
 ```ts
 // Convert exceptions into errors & function result into Ok
 function toResult<Val, ERR>(fn: () => Val): Result<Val, ERR>;
 
-// Convert function returning T and error mapper returning E to new function returning Result<T, E>
-function resultify<T, E, F extends Fn<T>>(fn: F, mapErr: (err: unknown) => E): ResFn<T, E, F>;
+// Just like the toResult function, but with better type support and an optional error mapper
+function resultify<TRes, TParams extends any[], E = ResultBaseError>(
+    fn: (...params: TParams) => TRes, mapErr?: (err: ResultBaseError) => E
+): (...params: TParams) => Result<TRes, E>;
 
-// Convert function returning Promise<T> and error mapper returning E to new function returning AsyncResult<T, E>
-function asyncResultify<T, E, F extends AsyncFn<T>>(fn: F, mapErr: (err: unknown) => E): AsyncResFn<T, E, F>;
+// Async version of resultify
+function asyncResultify<TRes, TParams extends any[], E = ResultBaseError>(
+    fn: (...params: TParams) => Promise<TRes>, mapErr?: (err: ResultBaseError) => AsyncMapped<E>
+): (...params: TParams) => AsyncResult<TRes, E>
 ```
 
 ## Example
 ```ts
-import { Ok, Err, Result, toResult, toResultAsync } from 'base-ts-result';
+import { 
+    Ok, 
+    Err, 
+    Result, 
+    toResult, 
+    AsyncResult, 
+    toAsyncResult, 
+    resultify, 
+    type ResultBaseError
+} from 'base-ts-result';
 
 const generateNumber = (): Result<number, string> => {
     const num = Math.round(Math.random() * 100);
@@ -135,12 +154,46 @@ const generateNumber = (): Result<number, string> => {
     return Err('Number below 50');
 };
 
+const getResult = () => {
+    let res: Result<number, unknown>;
+    
+    // res.isErr() = true;
+    res = toResult(() => {
+        throw new Error('like to throw exceptions');
+    });
+
+    // res.isErr() = false;
+    res = toResult(() => {
+        return 7;
+    });
+};
+
+const newGetResult = () => {
+    const fnThatThrows = (val: number) => {
+        if (val == 1) {
+            throw new Error(`Are ya kidding me?`);
+        }
+
+        return val;
+    };
+
+    // now it will return Result<number, BaseError>
+    const getNumber = resultify(fnThatThrows);
+    const res = getNumber(2);
+
+    // output
+    console.log(res.ok()); // 2
+    console.log(res.err()); // undefined
+}
+
 const handleResult = (res: Result<number, string>) => {
     // Result is OK
     // ===============
+    res.ok(); // 15
     res.unwrap(); // 15
-    res.unwrapOr(); // 15
+    res.unwrapOr(-1); // 15
     res.expect('Custom exception msg'); // 15
+    res.err(); // undefined
     res.unwrapErr(); // Exception: tried to get value as error from Ok result
 
     // Result is ERR
@@ -148,29 +201,19 @@ const handleResult = (res: Result<number, string>) => {
     res.unwrap(); // Exception: Unwrap error Result
     res.unwrapOr(-1); // -1
     res.expect('Custom exception msg'); // Exception: Custom exception msg
+    res.err(); // Error object
     res.unwrapErr(); // Error object
 
-    // If you wanna handle error in higher function, just check 
-    // =========================================================
-    if (res.isError) {
+    // If you want to handle the error in higher function, 
+    // just return the res 
+    // ==================================================
+    if (res.isErr()) {
         return res;
     }
 
     // some regular logic..
     return Ok('success handle result');
 }
-
-const getResult = () => {
-    // res.isError = true;
-    let res = toResult(() => {
-        throw new Error('like to throw exceptions');
-    });
-
-    // res.isError = false;
-    res = toResult(() => {
-        return 7;
-    });
-};
 
 const getResultAsync = async() => {
     // imitating promise with success result
@@ -191,27 +234,17 @@ const getResultAsync = async() => {
         });
     }
 
-    // res.isError = false; res.unwrap() = 1;
-    let res = await toResultAsync(() => {
-        return timer(1);
-    });
+    let res: AsyncResult<number, ResultBaseError>;
 
-    // res.isError = true;
-    res = await toResultAsync(() => {
-        return errTimer();
-    });
-
-    // Or you can pass a promise
     const timerPromise = timer(2);
     const errTimerPromise = errTimer();
 
     // res.isError = false; res.unwrap = 2;
-    res = await toResultAsync(timerPromise);
+    res = toAsyncResult(timerPromise);
 
     // res.isError = true;
-    res = await toResultAsync(errTimerPromise);
+    res = toAsyncResult(errTimerPromise);
 }
-
 ```
 
 ## Sources
