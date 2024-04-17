@@ -220,9 +220,9 @@ export class AsyncResult<Val, Err> {
         return this.thenInternal(async (res): Promise<Result<NewVal, Err>> => {
             if (res.isOk()) {
                 return Ok(await mapper(res.unwrap()));
-            } else {
-                return Err(res.unwrapErr());
             }
+
+            return Err(res.unwrapErr());
         });
     }
 
@@ -245,9 +245,9 @@ export class AsyncResult<Val, Err> {
         return this.thenInternal(async (res): Promise<Result<NewVal, Err>> => {
             if (res.isOk()) {
                 return Ok(await mapper(res.unwrap()));
-            } else {
-                return Ok(await fallback(res.unwrapErr()));
             }
+
+            return Ok(await fallback(res.unwrapErr()));
         });
     }
 
@@ -262,9 +262,9 @@ export class AsyncResult<Val, Err> {
         return this.thenInternal(async (res): Promise<Result<Val, NewErr>> => {
             if (res.isOk()) {
                 return Ok(res.unwrap());
-            } else {
-                return Err(await mapper(res.unwrapErr()));
             }
+
+            return Err(await mapper(res.unwrapErr()));
         });
     }
 
