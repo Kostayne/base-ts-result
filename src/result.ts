@@ -2,8 +2,8 @@ import { AsyncResult } from './asyncResult';
 import { type ResultBaseError, thrownUnknownToBaseError } from './baseResultError';
 
 export type ResultPromise<T, E> = Promise<Result<T, E>>;
-export type ReturnedResultPromise<T, E> = Promise<ReturnedResult<T, E>>
-export type ReturnedResult<T, E> = Ok<T> | Err<E> | Result<T, E>
+export type ReturnedResultPromise<T, E> = Promise<ReturnedResult<T, E>>;
+export type ReturnedResult<T, E> = Ok<T> | Err<E> | Result<T, E>;
 
 export interface Result<Val, Err> {
     readonly value: Val | Err;
@@ -183,6 +183,7 @@ export interface Result<Val, Err> {
 
 const origErrIndent = ' '.repeat(4);
 const origErrorPrefix = origErrIndent + '> ';
+
 class ERR<Err> implements Result<never, Err> {
     public readonly value!: Err;
 
@@ -195,7 +196,10 @@ class ERR<Err> implements Result<never, Err> {
     }
 
     private prefixMultiLineStr(str: string | undefined) {
-        return str?.split('\n').map((line) => origErrorPrefix + line).join('\n')
+        return str
+            ?.split('\n')
+            .map((line) => origErrorPrefix + line)
+            .join('\n');
     }
     private getAdditionalErrorMessage() {
         if (this.value instanceof Error) {
@@ -203,10 +207,10 @@ class ERR<Err> implements Result<never, Err> {
         }
         if (typeof this.value === 'object') {
             if (this.value === null) {
-                return `Original error is null`;
+                return 'Original error is null';
             }
             if (this.value.toString === Object.prototype.toString) {
-                return `Original error is object`;
+                return 'Original error is object';
             }
             return `Original error:\n${this.prefixMultiLineStr(this.value.toString())}`;
         }
@@ -389,10 +393,12 @@ export function toResult<T, E>(fn: () => T): Result<T, E> {
  *     }
  *     return a;
  * };
+ *
  * const fn = resultify(
  *     rawFn,
  *     err => err.message
  * ); // (a: number) => Result<number, string>
+ *
  * const res = fn(-2); // Result<number, string>
  * res.err() // 'not today'
  */

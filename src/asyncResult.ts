@@ -1,5 +1,5 @@
 import { type ResultBaseError, thrownUnknownToBaseError } from './baseResultError';
-import { Err, Ok, ResultPromise, type Result, ReturnedResult, ReturnedResultPromise } from './result';
+import { Err, Ok, type ResultPromise, type Result, type ReturnedResultPromise } from './result';
 
 export type AsyncResultPromise<T, E> = Promise<AsyncResult<T, E>>;
 /**
@@ -41,7 +41,6 @@ export class AsyncResult<Val, Err> {
     static fromResultPromise<Val, Err>(resultPromise: ResultPromise<Val, Err>): AsyncResult<Val, Err> {
         return new AsyncResult(resultPromise);
     }
-
 
     /**
      * @description Contained promise of Result
@@ -300,10 +299,12 @@ type AsyncMapped<T> = T | Promise<T>;
  *     }
  *     return a;
  * };
+ *
  * const fn = asyncResultify(
  *     rawFn,
  *     async err => err.message
  * ); // (a: number) => AsyncResult<number, string>
+ *
  * const res = fn(-2); // AsyncResult<number, string>
  * await res.err() // 'not today'
  */
@@ -328,14 +329,16 @@ export function asyncResultify<TRes, TParams extends any[], E = ResultBaseError>
  *     if (a < 0) {
  *         return Err('err');
  *     }
+ *
  *     return Ok(a);;
  * };
+ *
  * const resUnwrapped = (await resultPromiseFn(2)).unwrap();
  *
  * const fn = createAsyncResultFn(resultPromiseFn); // (a: number) => AsyncResult<number, string>
  * const resWrapped = await fn(2).unwrap(); // Same result, with more convenient async handling
  */
-export function createAsyncResultFn<TRes, TParams extends any[], E>(
+export function createAsyncResult<TRes, TParams extends any[], E>(
     fn: (...params: TParams) => ReturnedResultPromise<TRes, E>,
 ): (...params: TParams) => AsyncResult<TRes, E> {
     return (...params: Parameters<typeof fn>) => {
