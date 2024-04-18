@@ -6,11 +6,11 @@ const isResultBaseError = (val: unknown): val is ResultBaseError => {
     if (!val || typeof val !== 'object') {
         return false;
     }
-    if (('message' in val) && ('name' in val) && val.toString !== Object.prototype.toString) {
+    if ('message' in val && 'name' in val && val.toString !== Object.prototype.toString) {
         return true;
     }
     return false;
-}
+};
 export function thrownUnknownToBaseError(origValue: unknown): ResultBaseError {
     if (origValue instanceof Error) {
         return origValue;
@@ -20,7 +20,6 @@ export function thrownUnknownToBaseError(origValue: unknown): ResultBaseError {
     }
     return new BaseError(origValue);
 }
-
 
 /**
  *  @description Error-like wrapper for non-Error values caught by resultify and fromPromise.

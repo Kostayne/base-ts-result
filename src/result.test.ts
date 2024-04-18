@@ -230,7 +230,7 @@ describe('utils', () => {
 
     it(
         'resultify thrown non-Error which satisfies Error interface, does not get swallowed by BaseResultError ' +
-        'nor by unwrap error message',
+            'nor by unwrap error message',
         () => {
             class ErrorLike implements Error {
                 name = 'ErrorLike';
@@ -238,10 +238,9 @@ describe('utils', () => {
 
                 toString() {
                     return `${this.name}: ${this.message}\n    at some\n    at pseudo\n    at stacktrace`;
-
                 }
             }
-            const errorLikeObj = new ErrorLike()
+            const errorLikeObj = new ErrorLike();
             const test = resultify(() => {
                 throw errorLikeObj;
             });
@@ -259,6 +258,6 @@ describe('utils', () => {
     >     at stacktrace"
 `);
             }
-        }
+        },
     );
 });
