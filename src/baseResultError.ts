@@ -2,12 +2,25 @@
  *  @description Type for errors caught by resultify and fromPromise. Thrown non-Error values are converted to Error
  */
 export type ResultBaseError = Error & { origValue?: unknown };
+const isResultBaseError = (val: unknown): val is ResultBaseError => {
+    if (!val || typeof val !== 'object') {
+        return false;
+    }
+    if (('message' in val) && ('name' in val) && val.toString !== Object.prototype.toString) {
+        return true;
+    }
+    return false;
+}
 export function thrownUnknownToBaseError(origValue: unknown): ResultBaseError {
     if (origValue instanceof Error) {
         return origValue;
     }
+    if (isResultBaseError(origValue)) {
+        return origValue;
+    }
     return new BaseError(origValue);
 }
+
 
 /**
  *  @description Error-like wrapper for non-Error values caught by resultify and fromPromise.

@@ -37,7 +37,7 @@ describe('Result methods', () => {
     it('Expect throws error, if result is Err', () => {
         expect(() => Err('Should fail').expect('Should fail')).toThrowErrorMatchingInlineSnapshot(`
 "Should fail
-> Original error is: "Should fail""
+    Original error is: "Should fail""
 `);
     });
 
@@ -227,4 +227,38 @@ describe('utils', () => {
             expect(err.origValue).toEqual(1);
         }
     });
+
+    it(
+        'resultify thrown non-Error which satisfies Error interface, does not get swallowed by BaseResultError ' +
+        'nor by unwrap error message',
+        () => {
+            class ErrorLike implements Error {
+                name = 'ErrorLike';
+                message = 'message';
+
+                toString() {
+                    return `${this.name}: ${this.message}\n    at some\n    at pseudo\n    at stacktrace`;
+
+                }
+            }
+            const errorLikeObj = new ErrorLike()
+            const test = resultify(() => {
+                throw errorLikeObj;
+            });
+
+            expect(test().err()).toEqual(errorLikeObj);
+            try {
+                test().unwrap();
+            } catch (err) {
+                expect(err?.toString()).toMatchInlineSnapshot(`
+"Error: Tried to unwrap an Error result
+    Original error:
+    > ErrorLike: message
+    >     at some
+    >     at pseudo
+    >     at stacktrace"
+`);
+            }
+        }
+    );
 });

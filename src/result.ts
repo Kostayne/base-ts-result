@@ -2,6 +2,8 @@ import { AsyncResult } from './asyncResult';
 import { type ResultBaseError, thrownUnknownToBaseError } from './baseResultError';
 
 export type ResultPromise<T, E> = Promise<Result<T, E>>;
+export type ReturnedResultPromise<T, E> = Promise<ReturnedResult<T, E>>
+export type ReturnedResult<T, E> = Ok<T> | Err<E> | Result<T, E>
 
 export interface Result<Val, Err> {
     readonly value: Val | Err;
@@ -179,7 +181,8 @@ export interface Result<Val, Err> {
     toAsync(): AsyncResult<Val, Err>;
 }
 
-const origErrorPrefix = '> ';
+const origErrIndent = ' '.repeat(4);
+const origErrorPrefix = origErrIndent + '> ';
 class ERR<Err> implements Result<never, Err> {
     public readonly value!: Err;
 
@@ -188,25 +191,30 @@ class ERR<Err> implements Result<never, Err> {
     }
 
     private throwError(msg: string): never {
-        throw new Error(msg + '\n' + this.getAdditionalErrorMessage());
+        throw new Error(msg + '\n' + origErrIndent + this.getAdditionalErrorMessage());
     }
 
+    private prefixMultiLineStr(str: string | undefined) {
+        return str?.split('\n').map((line) => origErrorPrefix + line).join('\n')
+    }
     private getAdditionalErrorMessage() {
         if (this.value instanceof Error) {
-            const origErrStack = this.value.stack
-                ?.split('\n')
-                .map((line) => origErrorPrefix + line)
-                .join('\n');
-            return origErrorPrefix + 'Original error:\n' + origErrStack;
+            return 'Original error:\n' + this.prefixMultiLineStr(this.value.stack);
         }
         if (typeof this.value === 'object') {
-            return origErrorPrefix + 'Original error is object';
+            if (this.value === null) {
+                return `Original error is null`;
+            }
+            if (this.value.toString === Object.prototype.toString) {
+                return `Original error is object`;
+            }
+            return `Original error:\n${this.prefixMultiLineStr(this.value.toString())}`;
         }
         if (typeof this.value === 'number') {
-            return origErrorPrefix + `Original error is: ${this.value}`;
+            return `Original error is: ${this.value}`;
         }
         if (typeof this.value === 'string') {
-            return origErrorPrefix + `Original error is: "${this.value}"`;
+            return `Original error is: "${this.value}"`;
         }
     }
 

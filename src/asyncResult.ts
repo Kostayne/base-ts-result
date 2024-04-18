@@ -1,5 +1,5 @@
 import { type ResultBaseError, thrownUnknownToBaseError } from './baseResultError';
-import { Err, Ok, type Result } from './result';
+import { Err, Ok, ResultPromise, type Result, ReturnedResult, ReturnedResultPromise } from './result';
 
 export type AsyncResultPromise<T, E> = Promise<AsyncResult<T, E>>;
 /**
@@ -30,6 +30,18 @@ export class AsyncResult<Val, Err> {
     static fromResult<Val, Err>(result: Result<Val, Err>): AsyncResult<Val, Err> {
         return new AsyncResult(Promise.resolve(result));
     }
+
+    /**
+     * @param resultPromise
+     * @description AsyncResult.fromResultPromise(resultPromise) returns AsyncResult containing provided resultPromise
+     * @example
+     * const resPromise = AsyncResult.fromResult(Promise.resolve(Ok(5)));
+     * // Type of resPromise is AsyncResult<number, never>
+     */
+    static fromResultPromise<Val, Err>(resultPromise: ResultPromise<Val, Err>): AsyncResult<Val, Err> {
+        return new AsyncResult(resultPromise);
+    }
+
 
     /**
      * @description Contained promise of Result
@@ -278,7 +290,7 @@ export class AsyncResult<Val, Err> {
 type AsyncMapped<T> = T | Promise<T>;
 
 /**
- * @description Creates function returning AsyncResult<T, E> from provided FN returning T or Promise<T> and
+ * @description Creates function returning AsyncResult<T, E> from provided FN returning Promise<T> and
  *              optional error mapper returning E or Promise<E>.
  *              If FN throws exception, it is caught and passed to the error mapper.
  * @example
@@ -305,6 +317,29 @@ export function asyncResultify<TRes, TParams extends any[], E = ResultBaseError>
             return asyncPromise.mapErr(mapErr);
         }
         return asyncPromise as AsyncResult<TRes, E>;
+    };
+}
+
+/**
+ * @param fn
+ * @description Wraps fn changing its return type from ResultPromise<T, E> to AsyncResult<T, E>
+ * @example
+ * const resultPromiseFn = async (a: number): ResultPromise<number, string> => {
+ *     if (a < 0) {
+ *         return Err('err');
+ *     }
+ *     return Ok(a);;
+ * };
+ * const resUnwrapped = (await resultPromiseFn(2)).unwrap();
+ *
+ * const fn = createAsyncResultFn(resultPromiseFn); // (a: number) => AsyncResult<number, string>
+ * const resWrapped = await fn(2).unwrap(); // Same result, with more convenient async handling
+ */
+export function createAsyncResultFn<TRes, TParams extends any[], E>(
+    fn: (...params: TParams) => ReturnedResultPromise<TRes, E>,
+): (...params: TParams) => AsyncResult<TRes, E> {
+    return (...params: Parameters<typeof fn>) => {
+        return AsyncResult.fromResultPromise(fn(...params)) as AsyncResult<TRes, E>;
     };
 }
 

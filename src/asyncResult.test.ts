@@ -1,7 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 import { Err, Ok } from './result';
 
-import { AsyncResult, asyncResultify } from './asyncResult';
+import { AsyncResult, asyncResultify, createAsyncResultFn } from './asyncResult';
 
 describe('Constructors', () => {
     it('Simple Ok async result constructed from Ok result resolves to the provided result', async () => {
@@ -23,7 +23,7 @@ describe('Constructors', () => {
 
     it(
         'Simple Err async result constructed from promise of errRes which rejects with non-Error value, ' +
-            'resolves to Err of the value wrapped with BaseResultError',
+        'resolves to Err of the value wrapped with BaseResultError',
         async () => {
             const res = await AsyncResult.fromPromise(Promise.reject(1)).promise;
             expect(res.unwrapErr().toString()).toMatchInlineSnapshot(`"BaseError: Caught exotic value (number): 1"`);
@@ -31,7 +31,7 @@ describe('Constructors', () => {
     );
     it(
         'Simple Err async result constructed from promise of errRes which rejects with Error value, ' +
-            'resolves to Err of the value',
+        'resolves to Err of the value',
         async () => {
             const res = await AsyncResult.fromPromise(Promise.reject(new Error('err'))).promise;
             expect(res).toEqual(Err(new Error('err')));
@@ -92,7 +92,7 @@ describe('Result methods', () => {
         expect(asyncErrRes.unwrap()).rejects.toThrow();
         expect(asyncErrRes.expect('err')).rejects.toThrowErrorMatchingInlineSnapshot(`
 "err
-> Original error is: 1"
+    Original error is: 1"
 `);
     });
 });
@@ -246,4 +246,18 @@ describe('utils', () => {
 
         expect(await test().promise).toEqual(Err('err'));
     });
+
+    it(
+        'createAsyncResultFn correctly creates function returning AsyncResult from fn returning ResultPromise',
+        async () => {
+            const test = createAsyncResultFn(async (num: number) => {
+                if (num >= 0) {
+                    return Ok(num);
+                }
+                return Err('err');
+            })
+
+            expect(await test(5).promise).toEqual(Ok(5));
+            expect(await test(-1).promise).toEqual(Err('err'));
+        });
 });

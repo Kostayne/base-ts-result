@@ -76,14 +76,16 @@ class ERR implements Result;
 Class that contains operation result and interaction methods for async code
 ``` ts
 type AsyncMapped<T> = T|Promise<T>
+type PromiseResult<T, E> = Promise<Result<T, E>>
 // Async result implementation for more ergonomic usage of Results with async code
 class AsyncResult<Val, Err> {
     // Contained promise
-    promise: Promise<Result<Val, Err>>; 
+    promise: PromiseResult<Val, Err>; 
 
     // Creators
     static fromPromise<Val>(promise: Promise<Val>): AsyncResult<Val, unknown>;
     static fromResult<Val, Err>(result: Result<Val, Err>): AsyncResult<Val, Err>;
+    static fromResultPromise<Val, Err>(result: PromiseResult<Val, Err>): AsyncResult<Val, Err>;
 
     // Queries
     async unwrap(): Promise<Val>;
@@ -127,6 +129,11 @@ function resultify<TRes, TParams extends any[], E = ResultBaseError>(
 function asyncResultify<TRes, TParams extends any[], E = ResultBaseError>(
     fn: (...params: TParams) => Promise<TRes>, mapErr?: (err: ResultBaseError) => AsyncMapped<E>
 ): (...params: TParams) => AsyncResult<TRes, E>
+
+// Create function returning AsyncResult instead of ResultPromise, for more convenient result consumption
+function createAsyncResultFn<TRes, TParams extends any[], E>(
+    fn: (...params: TParams) => ResultPromise<TRes, E>,
+): (...params: TParams) => AsyncResult<TRes, E> {
 ```
 
 ## Example
