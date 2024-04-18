@@ -92,7 +92,7 @@ describe('Result methods', () => {
         expect(asyncErrRes.unwrap()).rejects.toThrow();
         expect(asyncErrRes.expect('err')).rejects.toThrowErrorMatchingInlineSnapshot(`
 "err
-> Original error is: 1"
+    Original error is: 1"
 `);
     });
 });
