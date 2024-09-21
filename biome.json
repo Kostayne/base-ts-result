@@ -1,40 +1,40 @@
 {
-    "organizeImports": {
-        "enabled": true
-    },
+  "organizeImports": {
+    "enabled": true
+  },
 
+  "formatter": {
+    "enabled": true,
+    "formatWithErrors": false,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 120
+  },
+
+  "json": {
     "formatter": {
-        "enabled": true,
-        "formatWithErrors": false,
-        "indentStyle": "space",
-        "indentWidth": 4,
-        "lineWidth": 120
-    },
-
-    "json": {
-        "formatter": {
-            "indentWidth": 2
-        }
-    },
-
-    "javascript": {
-        "formatter": {
-            "trailingComma": "all",
-            "semicolons": "always",
-            "quoteStyle": "single"
-        }
-    },
-
-    "linter": {
-        "enabled": true,
-        "rules": {
-            "suspicious": {
-                "noAssignInExpressions": "off",
-                "noExplicitAny": "off"
-            },
-            "style": {
-                "useTemplate": "off"
-            }
-        }
+      "indentWidth": 2
     }
+  },
+
+  "javascript": {
+    "formatter": {
+      "trailingComma": "all",
+      "semicolons": "always",
+      "quoteStyle": "single"
+    }
+  },
+
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "suspicious": {
+        "noAssignInExpressions": "off",
+        "noExplicitAny": "off"
+      },
+      "style": {
+        "useTemplate": "off"
+      }
+    }
+  }
 }
